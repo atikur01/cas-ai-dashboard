@@ -3,16 +3,17 @@ const cors = require('cors');
 const axios = require('axios');
 const FormData = require('form-data');
 const path = require('path');
-const livereload = require('livereload');
-const connectLiveReload = require('connect-livereload');
-
-const liveReloadServer = livereload.createServer();
-liveReloadServer.watch(path.join(__dirname, 'public'));
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(connectLiveReload());
+let liveReloadServer;
+if (process.env.NODE_ENV !== 'production') {
+  const livereload = require('livereload');
+  const connectLiveReload = require('connect-livereload');
+  liveReloadServer = livereload.createServer();
+  liveReloadServer.watch(path.join(__dirname, 'public'));
+  app.use(connectLiveReload());
+}
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -127,9 +128,11 @@ app.post('/api/mediation/data', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  liveReloadServer.server.once("connection", () => {
-    setTimeout(() => {
-      liveReloadServer.refresh("/");
-    }, 100);
-  });
+  if (liveReloadServer) {
+    liveReloadServer.server.once("connection", () => {
+      setTimeout(() => {
+        liveReloadServer.refresh("/");
+      }, 100);
+    });
+  }
 });
