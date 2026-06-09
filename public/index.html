@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAS.AI Revenue Reporting Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="glass-bg"></div>
+
+  <div id="auth-screen" class="screen active">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="logo">CAS.AI</div>
+        <h1>Reporting Panel</h1>
+        <p>Access your revenue mediation analytics programmatically</p>
+      </div>
+      <form id="login-form">
+        <div class="input-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" required placeholder="name@company.com">
+        </div>
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" required placeholder="••••••••">
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="remember-me">
+          <label for="remember-me">Remember credentials in Local Storage</label>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-login">Authenticate</button>
+      </form>
+      <div id="auth-error" class="error-message"></div>
+    </div>
+  </div>
+
+  <div id="dashboard-screen" class="screen">
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo">CAS.AI</div>
+        <nav class="main-nav">
+          <button class="nav-btn active" data-tab="analytics">Analytics</button>
+          <button class="nav-btn" data-tab="logs">System Logs</button>
+        </nav>
+      </div>
+      <div class="header-right">
+        <span class="user-email" id="user-display"></span>
+        <button class="btn btn-secondary btn-sm" id="btn-logout">Logout</button>
+      </div>
+    </header>
+
+    <div class="app-layout">
+      <aside class="filters-sidebar">
+        <h2>Report Filters</h2>
+        <form id="filters-form">
+          <div class="filter-group">
+            <label>Date Range</label>
+            <div class="date-row">
+              <input type="date" id="start-date" required>
+              <input type="date" id="end-date" required>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label for="select-apps">Applications</label>
+            <div class="multi-select-container">
+              <div class="multi-select-header" id="apps-header">All Applications</div>
+              <div class="multi-select-dropdown hidden" id="apps-dropdown"></div>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label for="select-countries">Countries</label>
+            <div class="multi-select-container">
+              <div class="multi-select-header" id="countries-header">All Countries</div>
+              <div class="multi-select-dropdown hidden" id="countries-dropdown"></div>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label for="select-formats">Ad Formats</label>
+            <div class="multi-select-container">
+              <div class="multi-select-header" id="formats-header">All Formats</div>
+              <div class="multi-select-dropdown hidden" id="formats-dropdown"></div>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label for="select-sources">Ad Sources</label>
+            <div class="multi-select-container">
+              <div class="multi-select-header" id="sources-header">All Sources</div>
+              <div class="multi-select-dropdown hidden" id="sources-dropdown"></div>
+            </div>
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="calc-total" checked>
+            <label for="calc-total">Calculate totals row</label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="btn-fetch">Fetch Report</button>
+        </form>
+      </aside>
+
+      <main class="main-content">
+        <div id="tab-analytics" class="tab-pane active">
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-title">Estimated Earnings</div>
+              <div class="kpi-value" id="kpi-earnings">-</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Impressions</div>
+              <div class="kpi-value" id="kpi-impressions">-</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Average eCPM</div>
+              <div class="kpi-value" id="kpi-ecpm">-</div>
+            </div>
+          </div>
+
+          <div class="charts-grid">
+            <div class="chart-card">
+              <div class="chart-header">
+                <h3>Earnings & eCPM Trend</h3>
+              </div>
+              <div class="chart-container">
+                <canvas id="trend-chart"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-header">
+                <h3>Distribution Breakdown</h3>
+                <select id="breakdown-dim">
+                  <option value="app">Application</option>
+                  <option value="country">Country</option>
+                  <option value="format">Ad Format</option>
+                  <option value="ad_source">Ad Source</option>
+                </select>
+              </div>
+              <div class="chart-container">
+                <canvas id="breakdown-chart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-header">
+              <div class="table-title-container">
+                <h3>Mediation Report Data</h3>
+                <div class="table-actions">
+                  <button class="btn btn-secondary btn-sm" id="btn-export">Export CSV</button>
+                </div>
+              </div>
+              <div class="columns-selector">
+                <span class="label">Report Columns:</span>
+                <div class="column-checkboxes">
+                  <label><input type="checkbox" data-col="date" checked> Date</label>
+                  <label><input type="checkbox" data-col="app" checked> App</label>
+                  <label><input type="checkbox" data-col="country" checked> Country</label>
+                  <label><input type="checkbox" data-col="format" checked> Format</label>
+                  <label><input type="checkbox" data-col="ad_source" checked> Source</label>
+                  <label><input type="checkbox" data-col="impressions" checked> Impressions</label>
+                  <label><input type="checkbox" data-col="observed_ecpm" checked> eCPM</label>
+                  <label><input type="checkbox" data-col="est_earnings" checked> Earnings</label>
+                  <label><input type="checkbox" data-col="dau"> DAU</label>
+                  <label><input type="checkbox" data-col="arpu"> ARPU</label>
+                </div>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table id="report-table">
+                <thead>
+                  <tr id="table-thead-tr">
+                    <th>Select filters to view report</th>
+                  </tr>
+                </thead>
+                <tbody id="table-tbody">
+                  <tr>
+                    <td>No data loaded yet. Use the filters to fetch data.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-logs" class="tab-pane">
+          <div class="logs-card">
+            <div class="logs-header">
+              <h3>System Logs & Activity</h3>
+              <button class="btn btn-secondary btn-sm" id="btn-clear-logs">Clear Logs</button>
+            </div>
+            <div class="logs-output" id="logs-output"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="loader" class="loader-overlay">
+    <div class="loader-spinner"></div>
+    <div class="loader-text" id="loader-text">Loading...</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
